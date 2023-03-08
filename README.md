@@ -1,3 +1,4 @@
 # PlateNumberWebApp
-This web app was made using YoloV5 
-to run it you will need Python 3.9.13 and to install the needed pachages
+This web api was made using YoloV5 
+to run it you will need Python and to install the needed pachages
+You can run it to get the results using postman
