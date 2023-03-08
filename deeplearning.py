@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+import os
 import matplotlib.pyplot as plt
 import pytesseract as pt
 
@@ -115,13 +116,18 @@ def yolo_predictions(img,net):
     return result_img, text
 
 
-def object_detection(path,filename):
+def object_detection(path, filename):
     # read image
     image = cv2.imread(path) # PIL object
     image = np.array(image,dtype=np.uint8) # 8 bit array (0,255)
     result_img, text_list = yolo_predictions(image,net)
-    cv2.imwrite('./static/predict/{}'.format(filename),result_img)
-    return text_list
+    
+    # Save predicted image
+    predicted_path = os.path.join('./static/predict/', filename)
+    cv2.imwrite(predicted_path, result_img)
+    
+    # Return filename of predicted image
+    return filename,text_list
 
 
 
