@@ -12,6 +12,8 @@ RUN pip install pytesseract
 RUN pip install matplotlib
 RUN pip install opencv-python
 RUN pip install numpy
+RUN pip install flask-smorest
+RUN pip install python-dotenv
 
 COPY . .
 CMD ["flask","run","--host","0.0.0.0"]

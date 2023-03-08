@@ -2,19 +2,23 @@ from flask import Flask, request, jsonify, send_file
 import os 
 from deeplearning import object_detection
 
+
 app = Flask(__name__)
 
 BASE_PATH = os.getcwd()
 UPLOAD_PATH = os.path.join(BASE_PATH,'static/upload/')
 PREDICT_PATH = os.path.join(BASE_PATH,'static/predict/')
 
-@app.route('/api/object_detection_text', methods=['POST'])
 
+@app.route('/api/object_detection_text', methods=['POST'])
 def detect_text():
     if 'image_name' not in request.files:
         return jsonify({'error': 'No file uploaded'}), 400
     
     upload_file = request.files['image_name']
+    if upload_file.filename == '':
+        return jsonify({'error': 'No file selected'}), 400
+    
     filename = upload_file.filename
     path_save = os.path.join(UPLOAD_PATH, filename)
     upload_file.save(path_save)
@@ -23,13 +27,16 @@ def detect_text():
     
     return jsonify({'text_list': text_list})
 
-@app.route('/api/object_detection_image', methods=['POST'])
 
+@app.route('/api/object_detection_image', methods=['POST'])
 def detect_image():
     if 'image_name' not in request.files:
         return jsonify({'error': 'No file uploaded'}), 400
     
     upload_file = request.files['image_name']
+    if upload_file.filename == '':
+        return jsonify({'error': 'No file selected'}), 400
+    
     filename = upload_file.filename
     path_save = os.path.join(UPLOAD_PATH, filename)
     upload_file.save(path_save)
