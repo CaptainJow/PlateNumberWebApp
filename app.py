@@ -1,49 +1,31 @@
-from flask import Flask, request, jsonify, send_file
-import os 
-from deeplearning import object_detection
+from flask import Flask
+from flask_smorest import Api
+from resources.object_detection import blp as ObjectDetection
+import models
+from db import db
+import os
 
 
-app = Flask(__name__)
+def create_app():
+    app = Flask(__name__)
 
-BASE_PATH = os.getcwd()
-UPLOAD_PATH = os.path.join(BASE_PATH,'static/upload/')
-PREDICT_PATH = os.path.join(BASE_PATH,'static/predict/')
+    app.config["PROPAGATE_EXCEPTIONS"] = True
+    app.config["API_TITLE"] = "IMAGE WEB API"
+    app.config["API_VERSION"] = "v1"
+    app.config["OPENAPI_VERSION"] = "3.0.3"
+    app.config["OPENAPI_URL_PREFIX"] = "/"
+    app.config["OPENAPI_SWAGGER_UI_PATH"] = "/swagger-ui"
+    app.config["OPENAPI_SWAGGER_UI_URL"] = "https://cdn.jsdelivr.net/npm/swagger-ui-dist/"
+    app.config["SQLALCHEMY_DATABASE_URI"] =  "sqlite:///data.db"
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    db.init_app(app)
 
+    api = Api(app)
 
-@app.route('/api/object_detection_text', methods=['POST'])
-def detect_text():
-    if 'image_name' not in request.files:
-        return jsonify({'error': 'No file uploaded'}), 400
-    
-    upload_file = request.files['image_name']
-    if upload_file.filename == '':
-        return jsonify({'error': 'No file selected'}), 400
-    
-    filename = upload_file.filename
-    path_save = os.path.join(UPLOAD_PATH, filename)
-    upload_file.save(path_save)
-    
-    filename2 ,text_list = object_detection(path_save, filename)
-    
-    return jsonify({'text_list': text_list})
+    @app.before_first_request
+    def create_tables():
+            db.create_all()
 
+    api.register_blueprint(ObjectDetection)
 
-@app.route('/api/object_detection_image', methods=['POST'])
-def detect_image():
-    if 'image_name' not in request.files:
-        return jsonify({'error': 'No file uploaded'}), 400
-    
-    upload_file = request.files['image_name']
-    if upload_file.filename == '':
-        return jsonify({'error': 'No file selected'}), 400
-    
-    filename = upload_file.filename
-    path_save = os.path.join(UPLOAD_PATH, filename)
-    upload_file.save(path_save)
-    
-    filename , text_list = object_detection(path_save, filename)
-    predicted_path = os.path.join(PREDICT_PATH, filename)
-    
-
-    return send_file(predicted_path)
-
+    return app

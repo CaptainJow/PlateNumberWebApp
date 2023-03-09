@@ -1,0 +1,95 @@
+from flask import request, jsonify, send_file
+import os
+
+from marshmallow import ValidationError 
+from deeplearning import object_detection
+from flask.views import MethodView
+from flask_smorest import Blueprint
+from werkzeug.utils import secure_filename
+
+
+from db import db
+from models.collection import CollectionModel
+from schemas import CollectionSchema
+
+blp = Blueprint("object_detection", __name__, description="Detecting images number plate")
+
+BASE_PATH = os.getcwd()
+UPLOAD_PATH = os.path.join(BASE_PATH,'static/upload/')
+PREDICT_PATH = os.path.join(BASE_PATH,'static/predict/')
+
+ALLOWED_EXTENSIONS = { 'png', 'jpg', 'jpeg'}
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@blp.route('/api/object_detection_text')
+class ObjectDetectionText(MethodView):
+    def post(self):
+        if 'image_name' not in request.files:
+            return jsonify({'error': 'No file uploaded'}), 400
+
+        upload_file = request.files['image_name']
+        if upload_file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
+
+        if not allowed_file(upload_file.filename):
+            return jsonify({'error': 'Unsupported file type'}), 400
+
+        # process the file
+        filename = secure_filename(upload_file.filename)
+        path_save = os.path.join(UPLOAD_PATH, filename)
+        upload_file.save(path_save)
+
+        filename2, text_list = object_detection(path_save, filename)
+
+        return jsonify({'text_list': text_list})
+
+
+@blp.route('/api/object_detection_image')
+class ObjectDetectionImage(MethodView):
+    def post(self):
+        if 'image_name' not in request.files:
+            return jsonify({'error': 'No file uploaded'}), 400
+
+        upload_file = request.files['image_name']
+        if upload_file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
+
+        if not allowed_file(upload_file.filename):
+            return jsonify({'error': 'Unsupported file type'}), 400
+
+        filename = upload_file.filename
+        path_save = os.path.join(UPLOAD_PATH, filename)
+        upload_file.save(path_save)
+
+        filename, text_list = object_detection(path_save, filename)
+        predicted_path = os.path.join(PREDICT_PATH, filename)
+
+        return send_file(predicted_path)
+
+
+
+@blp.route('/collections', methods=['POST'])
+def create_collection():
+    collection_schema = CollectionSchema()
+    try:
+        collection = collection_schema.load(request.json)
+    except ValidationError as err:
+        return jsonify(err.messages), 400
+
+    new_collection = CollectionModel(name=collection['name'])
+
+    db.session.add(new_collection)
+    db.session.commit()
+
+    serialized_collection = collection_schema.dump(new_collection)
+    return jsonify(serialized_collection), 201
+
+
+@blp.route('/collections', methods=['GET'])
+def get_collections():
+    collections = CollectionModel.query.all()
+    collection_schema = CollectionSchema(many=True)
+    return jsonify(collection_schema.dump(collections))

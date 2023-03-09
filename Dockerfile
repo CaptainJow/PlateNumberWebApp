@@ -14,6 +14,9 @@ RUN pip install opencv-python
 RUN pip install numpy
 RUN pip install flask-smorest
 RUN pip install python-dotenv
+RUN pip install flask-sqlalchemy
+RUN pip install marshmallow
+RUN pip install flask-migrate
 
 COPY . .
 CMD ["flask","run","--host","0.0.0.0"]
