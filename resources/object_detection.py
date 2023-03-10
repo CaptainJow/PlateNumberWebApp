@@ -10,7 +10,8 @@ from werkzeug.utils import secure_filename
 
 from db import db
 from models.collection import CollectionModel
-from schemas import CollectionSchema
+from models.item import ItemModel
+from schemas import CollectionSchema, ItemSchema
 
 blp = Blueprint("object_detection", __name__, description="Detecting images number plate")
 
@@ -93,3 +94,25 @@ def get_collections():
     collections = CollectionModel.query.all()
     collection_schema = CollectionSchema(many=True)
     return jsonify(collection_schema.dump(collections))
+
+@blp.route('/collections/items', methods=['POST'])
+def add_item_to_collection():
+    item_schema = ItemSchema()
+    try:
+        item = item_schema.load(request.json)
+    except ValidationError as err:
+        return jsonify(err.messages), 400
+
+    collection_id = item.get('collection_id')
+    collection = CollectionModel.query.get_or_404(collection_id)
+
+    new_item = ItemModel(value=item['value'], collection_id=collection.id)
+
+    db.session.add(new_item)
+    db.session.commit()
+
+    serialized_item = item_schema.dump(new_item)
+    serialized_collection = CollectionSchema().dump(collection)
+    serialized_collection['items'].append(serialized_item)
+    
+    return jsonify(serialized_item), 201
