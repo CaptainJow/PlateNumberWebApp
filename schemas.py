@@ -15,3 +15,12 @@ class ItemSchema(PlainItemSchema):
 class CollectionSchema(PlainCollectionSchema):
     items = fields.Nested(ItemSchema, many=True, dump_only=True)
 
+class UserSchema(Schema):
+    id = fields.Int(dump_only=True)
+    username = fields.Str(required=True)
+    email = fields.Email(required=True)
+    password = fields.Str(required=True, load_only=True)
+
+class LoginSchema(Schema):
+    email = fields.Email(required=True)
+    password = fields.Str(required=True, load_only=True)

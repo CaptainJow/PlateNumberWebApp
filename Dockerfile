@@ -17,6 +17,8 @@ RUN pip install python-dotenv
 RUN pip install flask-sqlalchemy
 RUN pip install marshmallow
 RUN pip install flask-migrate
+RUN pip install flask-jwt-extended
+RUN pip passlib
 
 COPY . .
 CMD ["flask","run","--host","0.0.0.0"]

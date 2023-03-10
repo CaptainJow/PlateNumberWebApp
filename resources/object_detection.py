@@ -1,13 +1,12 @@
 from flask import request, jsonify, send_file
 import os
-
 from marshmallow import ValidationError 
 from deeplearning import object_detection
 from flask.views import MethodView
 from flask_smorest import Blueprint
 from werkzeug.utils import secure_filename
 
-
+from sqlalchemy.exc import SQLAlchemyError
 from db import db
 from models.collection import CollectionModel
 from models.item import ItemModel
@@ -95,6 +94,8 @@ def get_collections():
     collection_schema = CollectionSchema(many=True)
     return jsonify(collection_schema.dump(collections))
 
+
+
 @blp.route('/collections/items', methods=['POST'])
 def add_item_to_collection():
     item_schema = ItemSchema()
@@ -108,11 +109,33 @@ def add_item_to_collection():
 
     new_item = ItemModel(value=item['value'], collection_id=collection.id)
 
-    db.session.add(new_item)
-    db.session.commit()
+    try:
+        db.session.add(new_item)
+        db.session.commit()
+    except SQLAlchemyError :
+        return jsonify("An error occurred while inserting the item."), 500
 
     serialized_item = item_schema.dump(new_item)
     serialized_collection = CollectionSchema().dump(collection)
     serialized_collection['items'].append(serialized_item)
     
     return jsonify(serialized_item), 201
+    
+
+@blp.route('/collections/items', methods=['DELETE'])
+def delete_item():
+    try:
+        item_id = request.json['id']
+    except KeyError:
+        return {'message': 'No item ID provided'}, 400
+
+    query = ItemModel.query.filter_by(id=item_id)
+    result = query.delete()
+
+    if result > 0:
+        db.session.commit()
+        return {'message': 'Item deleted successfully'}, 200
+    else:
+        return {'message': 'Item not found'}, 404
+
+
