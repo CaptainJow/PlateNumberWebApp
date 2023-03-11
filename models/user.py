@@ -1,4 +1,5 @@
 from db import db
+from models.collection import CollectionModel
 
 class UserModel(db.Model):
     __tablename__ = "users"
@@ -7,4 +8,10 @@ class UserModel(db.Model):
     username = db.Column(db.String(50), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(60), nullable=False)
-    # collection = db.relationship("CollectionModel", backref="user", uselist=False)
+    collection = db.relationship("CollectionModel", backref="user", uselist=False)
+
+    def create_collection(self):
+        collection = CollectionModel(name=f"{self.username}'s Collection")
+        self.collection = collection
+        db.session.add(collection)
+        db.session.commit()

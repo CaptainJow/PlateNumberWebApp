@@ -27,6 +27,8 @@ class UserRegister(MethodView):
         db.session.add(user)
         db.session.commit()
 
+        user.create_collection()
+
         return {"message":"User created successfuly "} , 201
         
     @blp.response(200, UserSchema(many=True))

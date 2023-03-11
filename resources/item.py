@@ -5,8 +5,9 @@ from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from db import db
 from models.collection import CollectionModel
 from models.item import ItemModel
+from models.user import UserModel
 from schemas import ItemSchema
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import get_jwt_identity, jwt_required
 
 blp = Blueprint("Items" , "items", description="Operations on items")
 
@@ -20,7 +21,11 @@ class ItemSubmission(MethodView):
     @blp.arguments(ItemSchema)
     @blp.response(201, ItemSchema)
     def post(self , Item_data):
-        Item = ItemModel(**Item_data)
+        user_id = get_jwt_identity()
+
+        collection_id = UserModel.query.get(user_id).collection.id
+
+        Item = ItemModel(value=Item_data["value"], collection_id=collection_id)
 
         try:
             db.session.add(Item)
