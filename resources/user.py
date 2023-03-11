@@ -1,17 +1,12 @@
-from flask import request, jsonify, send_file
+from flask import  jsonify
 import os
-from flask_jwt_extended import create_access_token
-from marshmallow import ValidationError 
-from deeplearning import object_detection
+from flask_jwt_extended import create_access_token, get_jwt, jwt_required,create_refresh_token,get_jwt_identity
+from blocklist import BLOCKLIST 
 from flask.views import MethodView
 from flask_smorest import Blueprint
-from werkzeug.utils import secure_filename
-import re
-from sqlalchemy.exc import SQLAlchemyError
 from db import db
 from models.user import UserModel
-from models.item import ItemModel
-from schemas import CollectionSchema, ItemSchema ,UserSchema ,LoginSchema
+from schemas import UserSchema ,LoginSchema
 from passlib.hash import pbkdf2_sha256
 
 
@@ -22,12 +17,7 @@ class UserRegister(MethodView):
     @blp.arguments(UserSchema)
     def post(self , user_data):
         if UserModel.query.filter(UserModel.email == user_data["email"]).first():
-            return jsonify("a User with the same Email address already Exists"), 409
-
-        # Validate email format
-        email_regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b'
-        if not re.match(email_regex, user_data["email"]):
-            return jsonify("Invalid email format."), 400
+            return jsonify({"message":"a User with the same Email address already Exists"}), 409
 
         user = UserModel(
             username = user_data["username"],
@@ -52,7 +42,56 @@ class UserLogin(MethodView):
         user = UserModel.query.filter(UserModel.email == user_data["email"]).first()
 
         if user and pbkdf2_sha256.verify(user_data["password"],user.password):
-            access_token = create_access_token(identity=user.id)
-            return{"access_token" : access_token , "data": jsonify(user)}
+            access_token = create_access_token(identity=user.id, fresh=True)
+            refresh_token = create_refresh_token(identity=user.id )
+            return {
+                "access_token": access_token,
+                "refresh_token": refresh_token,
+                "user": {
+                    "id": user.id,
+                    "email": user.email,
+                    "username": user.username,
+                }
+            }
         
         return jsonify({"message":"Invalid Credentials"}) , 401
+
+
+@blp.route("/logout")
+class UserLogout(MethodView):
+    @jwt_required()
+    def post(self):
+        jti = get_jwt()["jti"]
+        BLOCKLIST.add(jti)
+        return {"message": "Successfully logged out"}, 200
+
+
+@blp.route("/refresh")
+class TokenRefresh(MethodView):
+    @jwt_required(refresh=True)
+    def post(self):
+        current_user = get_jwt_identity()
+        new_token = create_access_token(identity=current_user, fresh=False)
+        # Make it clear that when to add the refresh token to the blocklist will depend on the app design
+        return {"access_token": new_token}, 200
+
+
+@blp.route("/user/<int:user_id>")
+class User(MethodView):
+    """
+    This resource can be useful when testing our Flask app.
+    We may not want to expose it to public users, but for the
+    sake of demonstration in this course, it can be useful
+    when we are manipulating data regarding the users.
+    """
+
+    @blp.response(200, UserSchema)
+    def get(self, user_id):
+        user = UserModel.query.get_or_404(user_id)
+        return user
+
+    def delete(self, user_id):
+        user = UserModel.query.get_or_404(user_id)
+        db.session.delete(user)
+        db.session.commit()
+        return {"message": "User deleted."}, 200

@@ -7,4 +7,4 @@ class UserModel(db.Model):
     username = db.Column(db.String(50), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(60), nullable=False)
-    collection = db.relationship("CollectionModel", backref="user", uselist=False)
+    # collection = db.relationship("CollectionModel", backref="user", uselist=False)

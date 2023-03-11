@@ -71,55 +71,55 @@ class ObjectDetectionImage(MethodView):
 
 
 
-@blp.route('/collections', methods=['POST'])
-def create_collection():
-    collection_schema = CollectionSchema()
-    try:
-        collection = collection_schema.load(request.json)
-    except ValidationError as err:
-        return jsonify(err.messages), 400
+# @blp.route('/collections', methods=['POST'])
+# def create_collection():
+#     collection_schema = CollectionSchema()
+#     try:
+#         collection = collection_schema.load(request.json)
+#     except ValidationError as err:
+#         return jsonify(err.messages), 400
 
-    new_collection = CollectionModel(name=collection['name'])
+#     new_collection = CollectionModel(name=collection['name'])
 
-    db.session.add(new_collection)
-    db.session.commit()
+#     db.session.add(new_collection)
+#     db.session.commit()
 
-    serialized_collection = collection_schema.dump(new_collection)
-    return jsonify(serialized_collection), 201
-
-
-@blp.route('/collections', methods=['GET'])
-def get_collections():
-    collections = CollectionModel.query.all()
-    collection_schema = CollectionSchema(many=True)
-    return jsonify(collection_schema.dump(collections))
+#     serialized_collection = collection_schema.dump(new_collection)
+#     return jsonify(serialized_collection), 201
 
 
+# @blp.route('/collections', methods=['GET'])
+# def get_collections():
+#     collections = CollectionModel.query.all()
+#     collection_schema = CollectionSchema(many=True)
+#     return jsonify(collection_schema.dump(collections))
 
-@blp.route('/collections/items', methods=['POST'])
-def add_item_to_collection():
-    item_schema = ItemSchema()
-    try:
-        item = item_schema.load(request.json)
-    except ValidationError as err:
-        return jsonify(err.messages), 400
 
-    collection_id = item.get('collection_id')
-    collection = CollectionModel.query.get_or_404(collection_id)
 
-    new_item = ItemModel(value=item['value'], collection_id=collection.id)
+# @blp.route('/collections/items', methods=['POST'])
+# def add_item_to_collection():
+#     item_schema = ItemSchema()
+#     try:
+#         item = item_schema.load(request.json)
+#     except ValidationError as err:
+#         return jsonify(err.messages), 400
 
-    try:
-        db.session.add(new_item)
-        db.session.commit()
-    except SQLAlchemyError :
-        return jsonify("An error occurred while inserting the item."), 500
+#     collection_id = item.get('collection_id')
+#     collection = CollectionModel.query.get_or_404(collection_id)
 
-    serialized_item = item_schema.dump(new_item)
-    serialized_collection = CollectionSchema().dump(collection)
-    serialized_collection['items'].append(serialized_item)
+#     new_item = ItemModel(value=item['value'], collection_id=collection.id)
+
+#     try:
+#         db.session.add(new_item)
+#         db.session.commit()
+#     except SQLAlchemyError :
+#         return jsonify("An error occurred while inserting the item."), 500
+
+#     serialized_item = item_schema.dump(new_item)
+#     serialized_collection = CollectionSchema().dump(collection)
+#     serialized_collection['items'].append(serialized_item)
     
-    return jsonify(serialized_item), 201
+#     return jsonify(serialized_item), 201
     
 
 @blp.route('/collections/items', methods=['DELETE'])
