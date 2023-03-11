@@ -1,8 +1,10 @@
-from marshmallow import Schema , fields
+from marshmallow import Schema , fields 
+
 
 class PlainItemSchema(Schema):
     id = fields.Str(dump_only=True)
     value = fields.Str(required=True)
+    created_at= fields.Str(required=True)
     
 class PlainCollectionSchema(Schema):
     id = fields.Str(dump_only=True)

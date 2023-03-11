@@ -1,3 +1,4 @@
+import datetime
 from flask import Flask, jsonify
 from flask_smorest import Api
 from resources.object_detection import blp as ObjectDetection
@@ -26,6 +27,8 @@ def create_app():
 
 
     app.config["JWT_SECRET_KEY"]= 'f9bf78b9a18ce6d46a0cd2b0b86df9da'
+    app.config["JWT_ACCESS_TOKEN_EXPIRES"]= datetime.timedelta(minutes=180)
+    app.config["JWT_REFRESH_TOKEN_EXPIRES"]= datetime.timedelta(days=30)
     jwt = JWTManager(app)
 
 

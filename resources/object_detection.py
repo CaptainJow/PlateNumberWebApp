@@ -1,16 +1,15 @@
 from flask import request, jsonify, send_file
 import os
+from flask_jwt_extended import jwt_required
 from marshmallow import ValidationError 
 from deeplearning import object_detection
 from flask.views import MethodView
 from flask_smorest import Blueprint
 from werkzeug.utils import secure_filename
 
-from sqlalchemy.exc import SQLAlchemyError
 from db import db
-from models.collection import CollectionModel
 from models.item import ItemModel
-from schemas import CollectionSchema, ItemSchema
+from resources.item import ItemSubmission
 
 blp = Blueprint("object_detection", __name__, description="Detecting images number plate")
 
@@ -26,6 +25,7 @@ def allowed_file(filename):
 
 @blp.route('/api/object_detection_text')
 class ObjectDetectionText(MethodView):
+    @jwt_required()
     def post(self):
         if 'image_name' not in request.files:
             return jsonify({'error': 'No file uploaded'}), 400
@@ -42,85 +42,58 @@ class ObjectDetectionText(MethodView):
         path_save = os.path.join(UPLOAD_PATH, filename)
         upload_file.save(path_save)
 
-        filename2, text_list = object_detection(path_save, filename)
-
-        return jsonify({'text_list': text_list})
-
-
-@blp.route('/api/object_detection_image')
-class ObjectDetectionImage(MethodView):
-    def post(self):
-        if 'image_name' not in request.files:
-            return jsonify({'error': 'No file uploaded'}), 400
-
-        upload_file = request.files['image_name']
-        if upload_file.filename == '':
-            return jsonify({'error': 'No file selected'}), 400
-
-        if not allowed_file(upload_file.filename):
-            return jsonify({'error': 'Unsupported file type'}), 400
-
-        filename = upload_file.filename
-        path_save = os.path.join(UPLOAD_PATH, filename)
-        upload_file.save(path_save)
-
         filename, text_list = object_detection(path_save, filename)
         predicted_path = os.path.join(PREDICT_PATH, filename)
+        
+        if text_list:
+            item_submission = ItemSubmission()
+            for text in text_list:
+                item_data_sent = {"value": text}  # replace COLLECTION_ID with the appropriate collection ID
+                print(item_data_sent)
+                item_submission.post(Item_data=item_data_sent)
 
         return send_file(predicted_path)
 
 
 
-# @blp.route('/collections', methods=['POST'])
-# def create_collection():
-#     collection_schema = CollectionSchema()
-#     try:
-#         collection = collection_schema.load(request.json)
-#     except ValidationError as err:
-#         return jsonify(err.messages), 400
+# @blp.route('/api/object_detection_image')
+# class ObjectDetectionImage(MethodView):
+#     def post(self):
+#         if 'image_name' not in request.files:
+#             return jsonify({'error': 'No file uploaded'}), 400
 
-#     new_collection = CollectionModel(name=collection['name'])
+#         upload_file = request.files['image_name']
+#         if upload_file.filename == '':
+#             return jsonify({'error': 'No file selected'}), 400
 
-#     db.session.add(new_collection)
-#     db.session.commit()
+#         if not allowed_file(upload_file.filename):
+#             return jsonify({'error': 'Unsupported file type'}), 400
 
-#     serialized_collection = collection_schema.dump(new_collection)
-#     return jsonify(serialized_collection), 201
+#         filename = upload_file.filename
+#         path_save = os.path.join(UPLOAD_PATH, filename)
+#         upload_file.save(path_save)
+
+#         filename, text_list = object_detection(path_save, filename)
+#         predicted_path = os.path.join(PREDICT_PATH, filename)
+
+#         return send_file(predicted_path)
+
+# @blp.route("/api/object_detection_text")
+# class ObjectDetectionText(MethodView):
+#     @blp.arguments(ImageSchema)
+#     @blp.response(201, ImageSchema)
+#     def post(self, data):
+#         upload_file = data['image']
+
+#         filename = secure_filename(upload_file.filename)
+#         path_save = os.path.join(UPLOAD_PATH, filename)
+#         upload_file.save(path_save)
+
+#         filename2, text_list = object_detection(path_save, filename)
+
+#         return jsonify({'text_list': text_list})
 
 
-# @blp.route('/collections', methods=['GET'])
-# def get_collections():
-#     collections = CollectionModel.query.all()
-#     collection_schema = CollectionSchema(many=True)
-#     return jsonify(collection_schema.dump(collections))
-
-
-
-# @blp.route('/collections/items', methods=['POST'])
-# def add_item_to_collection():
-#     item_schema = ItemSchema()
-#     try:
-#         item = item_schema.load(request.json)
-#     except ValidationError as err:
-#         return jsonify(err.messages), 400
-
-#     collection_id = item.get('collection_id')
-#     collection = CollectionModel.query.get_or_404(collection_id)
-
-#     new_item = ItemModel(value=item['value'], collection_id=collection.id)
-
-#     try:
-#         db.session.add(new_item)
-#         db.session.commit()
-#     except SQLAlchemyError :
-#         return jsonify("An error occurred while inserting the item."), 500
-
-#     serialized_item = item_schema.dump(new_item)
-#     serialized_collection = CollectionSchema().dump(collection)
-#     serialized_collection['items'].append(serialized_item)
-    
-#     return jsonify(serialized_item), 201
-    
 
 @blp.route('/collections/items', methods=['DELETE'])
 def delete_item():
