@@ -18,8 +18,11 @@ class ItemSubmission(MethodView):
     def get(self):
         page_size = request.args.get('page_size', type=int, default=10)
         page_index = request.args.get('page_index', type=int, default=1)
+        user_id = get_jwt_identity()
+        collection_id = UserModel.query.get(user_id).collection.id
 
-        query = ItemModel.query.paginate(page=page_index, per_page=page_size)
+        query = ItemModel.query.filter_by(collection_id=collection_id)\
+                            .paginate(page=page_index, per_page=page_size)
         return query.items
 
     @jwt_required()
