@@ -11,7 +11,7 @@ blp = Blueprint("collections" , "collections", description="Operations on collec
 
 
 
-@blp.route('/collections')
+# @blp.route('/collections')
 class CollectionSubmission(MethodView):
     @blp.arguments(CollectionSchema)
     @blp.response(201, CollectionSchema)

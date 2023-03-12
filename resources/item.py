@@ -26,8 +26,6 @@ class ItemSubmission(MethodView):
         return query.items
 
     @jwt_required()
-    # @blp.arguments(ItemSchema)
-    # @blp.response(201, ItemSchema)
     def post(self , Item_data):
         user_id = get_jwt_identity()
 

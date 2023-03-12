@@ -55,46 +55,6 @@ class ObjectDetectionText(MethodView):
         return send_file(predicted_path)
 
 
-
-# @blp.route('/api/object_detection_image')
-# class ObjectDetectionImage(MethodView):
-#     def post(self):
-#         if 'image_name' not in request.files:
-#             return jsonify({'error': 'No file uploaded'}), 400
-
-#         upload_file = request.files['image_name']
-#         if upload_file.filename == '':
-#             return jsonify({'error': 'No file selected'}), 400
-
-#         if not allowed_file(upload_file.filename):
-#             return jsonify({'error': 'Unsupported file type'}), 400
-
-#         filename = upload_file.filename
-#         path_save = os.path.join(UPLOAD_PATH, filename)
-#         upload_file.save(path_save)
-
-#         filename, text_list = object_detection(path_save, filename)
-#         predicted_path = os.path.join(PREDICT_PATH, filename)
-
-#         return send_file(predicted_path)
-
-# @blp.route("/api/object_detection_text")
-# class ObjectDetectionText(MethodView):
-#     @blp.arguments(ImageSchema)
-#     @blp.response(201, ImageSchema)
-#     def post(self, data):
-#         upload_file = data['image']
-
-#         filename = secure_filename(upload_file.filename)
-#         path_save = os.path.join(UPLOAD_PATH, filename)
-#         upload_file.save(path_save)
-
-#         filename2, text_list = object_detection(path_save, filename)
-
-#         return jsonify({'text_list': text_list})
-
-
-
 @blp.route('/collections/items', methods=['DELETE'])
 def delete_item():
     try:
