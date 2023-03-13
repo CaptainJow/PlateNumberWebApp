@@ -38,7 +38,8 @@ class ItemSubmission(MethodView):
                 "collection_id":collection_id,
                 "id": item.id,
                 "value":item.value,
-                "created_at":item.created_at.strftime("%d-%m-%Y")
+                "created_at":item.created_at.strftime("%d-%m-%Y"),
+                "image_name":item.image_name
             })
 
         
@@ -56,7 +57,7 @@ class ItemSubmission(MethodView):
 
         collection_id = UserModel.query.get(user_id).collection.id
 
-        Item = ItemModel(value=Item_data["value"], collection_id=collection_id)
+        Item = ItemModel(value=Item_data["value"], collection_id=collection_id,image_name=Item_data["image_name"])
 
         try:
             db.session.add(Item)

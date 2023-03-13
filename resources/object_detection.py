@@ -1,6 +1,8 @@
+import datetime
+import uuid
 from flask import request, jsonify, send_file
 import os
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import get_jwt_identity, jwt_required
 from marshmallow import ValidationError 
 from deeplearning import object_detection
 from flask.views import MethodView
@@ -38,7 +40,11 @@ class ObjectDetectionText(MethodView):
             return jsonify({'error': 'Unsupported file type'}), 400
 
         # process the file
-        filename = secure_filename(upload_file.filename)
+        user_id = get_jwt_identity()
+        now = datetime.datetime.utcnow().date()
+        current_time = now.strftime("%Y-%m-%d-%H-%M-%S")
+        filename = secure_filename(f"{user_id}_{str(uuid.uuid4())}_{current_time}{os.path.splitext(upload_file.filename)[1]}")
+
         path_save = os.path.join(UPLOAD_PATH, filename)
         upload_file.save(path_save)
 
@@ -48,8 +54,8 @@ class ObjectDetectionText(MethodView):
         if text_list:
             item_submission = ItemSubmission()
             for text in text_list:
-                item_data_sent = {"value": text}  # replace COLLECTION_ID with the appropriate collection ID
-                print(item_data_sent)
+                item_data_sent = {"value": text,
+                                  "image_name":filename}  # replace COLLECTION_ID with the appropriate collection ID
                 item_submission.post(Item_data=item_data_sent)
 
         return send_file(predicted_path)

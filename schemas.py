@@ -5,6 +5,7 @@ class PlainItemSchema(Schema):
     id = fields.Str(dump_only=True)
     value = fields.Str(required=True)
     created_at= fields.Str(required=True)
+    image_name= fields.Str(required=True)
     
 class PlainCollectionSchema(Schema):
     id = fields.Str(dump_only=True)
