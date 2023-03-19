@@ -4,6 +4,9 @@ This is a Flask Web Api that will help the user to detect the number plate posit
 the machine learning modul was created using YoloV5 .
 Also this api will be part of an Android application created using React-Native
 
+## Latency issue
+when starting the api from the link you will need to wait a few moments at first so that it loads because I am using a free hosting plan from render.com
+
 ## Used Technologies 
 ***the app was made using:*** Python,Flask ,tesseract ,YoloV5 ,Docker,elephantsql,postgresql
 
@@ -56,6 +59,15 @@ this will give you the access token that you will use to for the /api/object_det
 
 you need to chose form-data body format if you are using Postman to upload the image .
 
+```http
+  GET /collections/items?page_size=${page_size}&page_index=${page_index} 
+```
+| Parameter | Type     | Description                |
+| :-------- | :------- | :------------------------- |
+| `page_size` | `int` | **Required**. |
+| `page_index` | `int` | **Required**. |
+
+this is how you can get the history for each user and you need to specify the page size and page index.
 
 
 
