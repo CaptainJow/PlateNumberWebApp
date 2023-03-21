@@ -26,16 +26,21 @@ class UserRegister(MethodView):
             )
             db.session.add(user)
             db.session.commit()
-
             user.create_collection()
+
+            access_token = create_access_token(identity=user.id, fresh=True)
+            refresh_token = create_refresh_token(identity=user.id )
 
             return {
                     "message":"User created successfully" , 
+                    "access_token": access_token,
+                    "refresh_token": refresh_token,
                     "user": {
-                    "id": user.id,
-                    "email": user.email,
-                    "username": user.username,
-                }} , 201
+                        "id": user.id,
+                        "email": user.email,
+                        "username": user.username,
+                    }
+                } , 201
 
         except IntegrityError:
             db.session.rollback()
