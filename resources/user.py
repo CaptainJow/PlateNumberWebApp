@@ -8,7 +8,7 @@ from db import db
 from models.user import UserModel
 from schemas import UserSchema ,LoginSchema
 from passlib.hash import pbkdf2_sha256
-
+from sqlalchemy.exc import IntegrityError
 
 blp = Blueprint("Users" , "users", description="Operations on users")
 
@@ -16,20 +16,30 @@ blp = Blueprint("Users" , "users", description="Operations on users")
 class UserRegister(MethodView):
     @blp.arguments(UserSchema)
     def post(self , user_data):
-        if UserModel.query.filter(UserModel.email == user_data["email"]).first():
-            return jsonify({"message":"a User with the same Email address already Exists"}), 409
+        email = user_data["email"].lower()
 
-        user = UserModel(
-            username = user_data["username"],
-            email = user_data["email"],
-            password = pbkdf2_sha256.hash(user_data["password"])
-        )
-        db.session.add(user)
-        db.session.commit()
+        try:
+            user = UserModel(
+                username = user_data["username"],
+                email = email,
+                password = pbkdf2_sha256.hash(user_data["password"])
+            )
+            db.session.add(user)
+            db.session.commit()
 
-        user.create_collection()
+            user.create_collection()
 
-        return {"message":"User created successfuly "} , 201
+            return {
+                    "message":"User created successfully" , 
+                    "user": {
+                    "id": user.id,
+                    "email": user.email,
+                    "username": user.username,
+                }} , 201
+
+        except IntegrityError:
+            db.session.rollback()
+            return {"message": "A user with the same email address already exists"}, 409
         
     @blp.response(200, UserSchema(many=True))
     def get(self):
