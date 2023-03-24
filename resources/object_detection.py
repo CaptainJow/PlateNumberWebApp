@@ -58,7 +58,7 @@ class ObjectDetectionText(MethodView):
                                   "image_name":filename}  # replace COLLECTION_ID with the appropriate collection ID
                 item_submission.post(Item_data=item_data_sent)
 
-        return send_file(predicted_path)
+        return {'filename':filename , 'text_list':text_list}
 
 
 @blp.route('/collections/items', methods=['DELETE'])
