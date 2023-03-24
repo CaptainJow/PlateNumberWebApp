@@ -30,7 +30,7 @@ def create_app(db_url=None):
 
 
     app.config["JWT_SECRET_KEY"]= 'f9bf78b9a18ce6d46a0cd2b0b86df9da'
-    app.config["JWT_ACCESS_TOKEN_EXPIRES"]= datetime.timedelta(minutes=180)
+    app.config["JWT_ACCESS_TOKEN_EXPIRES"]= datetime.timedelta(minutes=360)
     app.config["JWT_REFRESH_TOKEN_EXPIRES"]= datetime.timedelta(days=30)
 
     migrate = Migrate(app , db)
