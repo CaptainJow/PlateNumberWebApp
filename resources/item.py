@@ -29,6 +29,7 @@ class ItemSubmission(MethodView):
 
         # Get paginated items
         query = ItemModel.query.filter_by(collection_id=collection_id)\
+                            .order_by(ItemModel.id.desc())\
                             .paginate(page=page_index, per_page=page_size)
         # Return a dictionary with the total count and paginated items
         items_data = []
