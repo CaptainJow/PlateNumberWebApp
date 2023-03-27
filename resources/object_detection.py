@@ -57,9 +57,14 @@ class ObjectDetectionText(MethodView):
                 item_data_sent = {"value": text,
                                   "image_name":filename}  # replace COLLECTION_ID with the appropriate collection ID
                 item_submission.post(Item_data=item_data_sent)
-
-        return {'filename':filename , 'text_list':text_list}
-
+            
+            return {'filename':filename , 'text_list':text_list}
+        
+        # If no number plate found
+        else:
+            os.remove(path_save)
+            return jsonify({'error': 'Number plate not found in the image'}), 400
+            
 
 @blp.route('/collections/items', methods=['DELETE'])
 def delete_item():
